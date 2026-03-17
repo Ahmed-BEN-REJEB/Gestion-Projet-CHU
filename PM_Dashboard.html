@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projet Pré-consultation Anesthésie — Tableaux de bord</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #F0F4F8;
+    }
+
+    /* ─── NAV ─── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0D1B2A;
+      display: flex;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-title {
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #00A8E8;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      min-width: 220px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      flex: 1;
+      overflow-x: auto;
+    }
+
+    .nav-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 8px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .nav-btn.active {
+      color: #fff;
+      border-bottom: 3px solid #00A8E8;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* ─── PANELS ─── */
+    .panel {
+      display: none;
+      padding: 32px 24px 60px;
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .panel-header {
+      margin-bottom: 28px;
+    }
+
+    .panel-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1F4E79;
+      margin-bottom: 4px;
+    }
+
+    .panel-sub {
+      font-size: 13px;
+      color: #718096;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #94A3B8;
+      font-style: italic;
+      margin-bottom: 24px;
+    }
+
+    /* ─── SHARED ─── */
+    .shadow {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.09);
+    }
+
+    .white-card {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .spacer {
+      height: 20px;
+    }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1F4E79;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-left: 3px solid #00A8E8;
+      padding-left: 10px;
+    }
+
+
+    /* ─── VALIDATION STEPS ─── */
+    .vstep {
+      display: flex;
+      margin-bottom: 6px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .vstep:hover {
+      transform: translateX(3px);
+    }
+
+    .vstep-num {
+      width: 58px;
+      min-width: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .vstep-body {
+      padding: 14px 18px;
+      flex: 1;
+    }
+
+    .vstep-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .vstep-desc {
+      font-size: 11.5px;
+      color: #64748B;
+    }
+
+    .vstep-detail {
+      display: none;
+      padding: 10px 18px 14px 18px;
+      background: #F8FAFC;
+      border-top: 1px solid #EEF2F6;
+    }
+
+    .vstep-detail.open {
+      display: block;
+    }
+
+    .vstep-ditem {
+      font-size: 12px;
+      color: #4A5568;
+      padding: 4px 0;
+      display: flex;
+      gap: 7px;
+    }
+
+    .vstep-ditem::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .vconnector {
+      width: 3px;
+      height: 16px;
+      margin-left: 27px;
+      margin-bottom: 6px;
+    }
+
+    .go-nogo {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .go-badge {
+      flex: 1;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .go-badge strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .go-badge span {
+      font-size: 11px;
+    }
+
+    /* ─── BUSINESS CASE ─── */
+    .bc-piliers {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .bc-card {
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .bc-header {
+      padding: 12px 16px;
+    }
+
+    .bc-htitle {
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .bc-hsub {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-top: 2px;
+    }
+
+    .bc-body {
+      padding: 12px 16px;
+    }
+
+    .bc-item {
+      font-size: 12px;
+      color: #4A5568;
+      padding: 4px 0;
+      display: flex;
+      gap: 7px;
+      border-bottom: 1px solid #F0F4F8;
+    }
+
+    .bc-item:last-child {
+      border-bottom: none;
+    }
+
+    .bc-item::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .args-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .arg-badge {
+      flex: 1;
+      min-width: 140px;
+      border-radius: 8px;
+      padding: 14px 12px;
+    }
+
+    .arg-num {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      opacity: 0.7;
+    }
+
+    .arg-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 4px;
+    }
+
+    .arg-desc {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: 6px;
+    }
+
+    /* ─── TIMELINE DEPLOIEMENT ─── */
+    .timeline {
+      position: relative;
+      padding-left: 58px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(to bottom, #1F4E79, #7030A0);
+      border-radius: 3px;
+    }
+
+    .tl-item {
+      position: relative;
+      margin-bottom: 24px;
+    }
+
+    .tl-dot {
+      position: absolute;
+      left: -46px;
+      top: 18px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      z-index: 2;
+      box-shadow: 0 0 0 4px #F0F4F8;
+    }
+
+    .tl-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .tl-card:hover {
+      transform: translateX(3px);
+    }
+
+    .tl-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+    }
+
+    .tl-htitle {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .tl-hdesc {
+      font-size: 11.5px;
+      color: #64748B;
+    }
+
+    .tl-toggle {
+      margin-left: auto;
+      color: #A0AEC0;
+      font-size: 18px;
+      transition: transform 0.2s;
+    }
+
+    .tl-card.open .tl-toggle {
+      transform: rotate(180deg);
+    }
+
+    .tl-body {
+      display: none;
+      padding: 14px 18px;
+      border-top: 1px solid #F0F4F8;
+    }
+
+    .tl-card.open .tl-body {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tl-col {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .tl-col-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid;
+    }
+
+    .tl-col-item {
+      font-size: 11.5px;
+      color: #4A5568;
+      padding: 4px 0;
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid #F8FAFC;
+    }
+
+    .tl-col-item::before {
+      content: '';
+      flex-shrink: 0;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .actors-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #F0F4F8;
+      width: 100%;
+    }
+
+    .actor {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      background: #EEF1F5;
+      color: #1F4E79;
+    }
+
+    /* ─── AVANT/APRES ─── */
+    .avant-apres {
+      display: flex;
+      gap: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.09);
+      margin-bottom: 28px;
+    }
+
+    .aa-col {
+      flex: 1;
+    }
+
+    .aa-header {
+      padding: 14px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .aa-body {
+      background: #fff;
+      padding: 16px 18px;
+    }
+
+    .aa-item {
+      font-size: 12.5px;
+      color: #4A5568;
+      padding: 7px 0;
+      border-bottom: 1px solid #F0F4F8;
+      display: flex;
+      gap: 8px;
+    }
+
+    .aa-item:last-child {
+      border-bottom: none;
+    }
+
+    .aa-item::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    /* ─── CC GRID ─── */
+    .cc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .cc-card {
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.15s;
+    }
+
+    .cc-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .cc-header {
+      padding: 12px 16px;
+    }
+
+    .cc-num {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      opacity: 0.5;
+    }
+
+    .cc-htitle {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .cc-body {
+      padding: 12px 16px;
+    }
+
+    .cc-item {
+      font-size: 11.5px;
+      color: #4A5568;
+      padding: 4px 0;
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid #F8FAFC;
+    }
+
+    .cc-item:last-child {
+      border-bottom: none;
+    }
+
+    .cc-item::before {
+      content: '';
+      flex-shrink: 0;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      margin-top: 5px;
+      background: #94A3B8;
+    }
+
+    /* ─── KPI ─── */
+    .kpi-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      flex: 1;
+      min-width: 140px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .kpi-top {
+      height: 4px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .kpi-val {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: #64748B;
+      line-height: 1.4;
+    }
+
+    .kpi-sub {
+      font-size: 10px;
+      color: #94A3B8;
+      margin-top: 6px;
+    }
+
+    /* ─── INTEROP ─── */
+    .interop-flow {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      overflow-x: auto;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .ibox {
+      min-width: 180px;
+      max-width: 200px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .ibox-header {
+      padding: 12px 14px;
+    }
+
+    .ibox-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .ibox-sub {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 2px;
+    }
+
+    .ibox-body {
+      padding: 12px 14px;
+    }
+
+    .ibox-item {
+      font-size: 11.5px;
+      color: #4A5568;
+      padding: 4px 0;
+      display: flex;
+      gap: 5px;
+    }
+
+    .ibox-item::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+      background: #CBD5E0;
+    }
+
+    .arrow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 60px;
+      padding: 0 6px;
+      margin-top: 20px;
+    }
+
+    .arrow-line {
+      width: 100%;
+      height: 2px;
+      position: relative;
+    }
+
+    .arrow-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .sec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .sec-card {
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+      border-left: 4px solid;
+    }
+
+    .sec-label {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .sec-desc {
+      font-size: 11px;
+      color: #64748B;
+      line-height: 1.5;
+    }
+
+    /* ─── GANTT ─── */
+    .gantt-wrap {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.09);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .gantt-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1F4E79;
+      margin-bottom: 16px;
+    }
+
+    .gantt-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+
+    .gantt-table th {
+      background: #0D1B2A;
+      color: #fff;
+      padding: 6px 4px;
+      text-align: center;
+      font-size: 10px;
+    }
+
+    .gantt-table th:first-child {
+      background: #1F4E79;
+      text-align: left;
+      padding-left: 12px;
+      width: 180px;
+    }
+
+    .gantt-table td {
+      padding: 4px;
+      border-bottom: 1px solid #F0F4F8;
+    }
+
+    .gantt-table td:first-child {
+      font-size: 11.5px;
+      padding-left: 12px;
+      font-weight: 600;
+    }
+
+    .gantt-table tr:nth-child(even) td {
+      background: #F8FAFC;
+    }
+
+    .gantt-bar-cell {
+      min-width: 40px;
+      height: 26px;
+      vertical-align: middle;
+    }
+
+    .gantt-bar {
+      height: 18px;
+      border-radius: 3px;
+      margin: 4px 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .milestone {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    /* ─── COLORS ─── */
+    .c-blue {
+      background: #1F4E79;
+    }
+
+    .tc-blue {
+      color: #1F4E79;
+    }
+
+    .bc-blue {
+      border-color: #1F4E79;
+    }
+
+    .c-mid {
+      background: #2E75B6;
+    }
+
+    .tc-mid {
+      color: #2E75B6;
+    }
+
+    .bc-mid {
+      border-color: #2E75B6;
+    }
+
+    .c-teal {
+      background: #0F766E;
+    }
+
+    .tc-teal {
+      color: #0F766E;
+    }
+
+    .bc-teal {
+      border-color: #0F766E;
+    }
+
+    .c-purple {
+      background: #6B21A8;
+    }
+
+    .tc-purple {
+      color: #6B21A8;
+    }
+
+    .bc-purple {
+      border-color: #6B21A8;
+    }
+
+    .c-green {
+      background: #166534;
+    }
+
+    .tc-green {
+      color: #166534;
+    }
+
+    .bc-green {
+      border-color: #166534;
+    }
+
+    .c-red {
+      background: #991B1B;
+    }
+
+    .tc-red {
+      color: #991B1B;
+    }
+
+    .bc-red {
+      border-color: #991B1B;
+    }
+
+    .c-orange {
+      background: #9A3412;
+    }
+
+    .tc-orange {
+      color: #9A3412;
+    }
+
+    .bc-orange {
+      border-color: #9A3412;
+    }
+
+    .c-sky {
+      background: #0284C7;
+    }
+
+    .tc-sky {
+      color: #0284C7;
+    }
+
+    .bc-sky {
+      border-color: #0284C7;
+    }
+
+    .bg-lgreen {
+      background: #DCFCE7;
+    }
+
+    .bg-lred {
+      background: #FEE2E2;
+    }
+
+    .bg-lblue {
+      background: #EBF3FB;
+    }
+
+    .bg-lorange {
+      background: #FFEDD5;
+    }
+
+    .bg-lpurple {
+      background: #F3E8FF;
+    }
+
+    .bg-lteal {
+      background: #CCFBF1;
+    }
+
+    @media (max-width: 768px) {
+
+      .swott-grid,
+      .bc-piliers,
+      .cc-grid,
+      .sec-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .avant-apres {
+        flex-direction: column;
+      }
+
+      .interop-flow {
+        flex-direction: column;
+      }
+
+      .nav-title {
+        display: none;
+      }
+    }
+
+    /* ─── STAGE-GATE (validation panel) ─── */
+    .sg-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    .sg-page-sub {
+      color: #5A7FA0;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .sg-toggle-hint {
+      font-size: 12px;
+      color: #718096;
+      margin-bottom: 28px;
+      font-style: italic;
+    }
+
+    .sg-flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    .sg-step {
+      width: 100%;
+      display: flex;
+      align-items: stretch;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+
+    .sg-step:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+    }
+
+    .sg-step-num {
+      width: 72px;
+      min-width: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 28px;
+      font-weight: 800;
+      padding: 20px 8px;
+    }
+
+    .sg-step-num .sg-label {
+      font-size: 10px;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .sg-step-body {
+      flex: 1;
+      background: #fff;
+      padding: 20px 24px;
+    }
+
+    .sg-step-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .sg-step-desc {
+      font-size: 13px;
+      color: #5A6678;
+      line-height: 1.6;
+    }
+
+    .sg-step-items {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .sg-step-items.open {
+      display: block;
+    }
+
+    .sg-step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-top: 1px solid #EEF1F5;
+      font-size: 12.5px;
+      color: #4A5568;
+    }
+
+    .sg-step-item .sg-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .sg-step-actors {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .sg-actor-tag {
+      font-size: 11px;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      background: #EEF1F5;
+      color: #1F4E79;
+    }
+
+    .sg-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 48px;
+      justify-content: center;
+    }
+
+    .sg-arrow-line {
+      width: 2px;
+      flex: 1;
+      background: linear-gradient(to bottom, #CBD5E0, #A0AEC0);
+    }
+
+    .sg-arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 12px solid #A0AEC0;
+    }
+
+    .sg-arrow-label {
+      font-size: 11px;
+      color: #718096;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin: 2px 0;
+    }
+
+    .sg-gate {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+      background: #FFFBEB;
+      border: 2px solid #F6A800;
+      margin: 4px 0;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+
+    .sg-gate:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+    }
+
+    .sg-gate-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+    }
+
+    .sg-gate-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #7A4F00;
+    }
+
+    .sg-gate-chip {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #F6A800;
+      color: #1A1A1A;
+    }
+
+    .sg-gate-body {
+      display: none;
+      background: #fff;
+      padding: 12px 14px;
+      border-top: 1px solid #FDE6A7;
+    }
+
+    .sg-gate-body.open {
+      display: block;
+    }
+
+    .sg-gate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .sg-gate-box {
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #F7FAFC;
+      border: 1px solid #EEF1F5;
+    }
+
+    .sg-gate-box strong {
+      display: block;
+      font-size: 12px;
+      color: #1F4E79;
+      margin-bottom: 6px;
+    }
+
+    .sg-gate-box ul {
+      margin-left: 16px;
+    }
+
+    .sg-gate-box li {
+      font-size: 12px;
+      color: #4A5568;
+      line-height: 1.55;
+      padding: 2px 0;
+    }
+
+    .sg-decision-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 6px 0;
+    }
+
+    .sg-diamond {
+      width: 200px;
+      height: 76px;
+      background: #FFF3CD;
+      border: 2px solid #F6A800;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #7A4F00;
+      box-shadow: 0 2px 8px rgba(246, 168, 0, 0.2);
+    }
+
+    .sg-decision-branch {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      width: 100%;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sg-branch-card {
+      flex: 1;
+      min-width: 280px;
+      max-width: 360px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    }
+
+    .sg-branch-header {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .sg-branch-body {
+      background: #fff;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: #4A5568;
+      line-height: 1.55;
+    }
+
+    .sg-conclusion {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.13);
+    }
+
+    .sg-conclusion-header {
+      background: linear-gradient(135deg, #1F4E79, #2E75B6);
+      padding: 20px 24px;
+      color: #fff;
+    }
+
+    .sg-conclusion-header h3 {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .sg-conclusion-header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .sg-conclusion-body {
+      background: #fff;
+      padding: 20px 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sg-deliverable {
+      flex: 1;
+      min-width: 200px;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #EBF3FB;
+      border-left: 4px solid #2E75B6;
+    }
+
+    .sg-deliverable strong {
+      display: block;
+      font-size: 12px;
+      color: #1F4E79;
+      margin-bottom: 4px;
+    }
+
+    .sg-deliverable span {
+      font-size: 12px;
+      color: #4A5568;
+    }
+
+    .sg-legend {
+      margin: 34px auto 0;
+      max-width: 860px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .sg-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #4A5568;
+    }
+
+    .sg-legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .sg-c1 {
+      background: #1F4E79;
+    }
+
+    .sg-t1 {
+      color: #1F4E79;
+    }
+
+    .sg-c2 {
+      background: #2E75B6;
+    }
+
+    .sg-t2 {
+      color: #2E75B6;
+    }
+
+    .sg-c3 {
+      background: #0070C0;
+    }
+
+    .sg-t3 {
+      color: #0070C0;
+    }
+
+    .sg-c4 {
+      background: #375623;
+    }
+
+    .sg-t4 {
+      color: #375623;
+    }
+
+    .sg-c5 {
+      background: #7030A0;
+    }
+
+    .sg-t5 {
+      color: #7030A0;
+    }
+
+    /* ─── TRIANGLE D'ALIGNEMENT ─── */
+    .tri-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .tri-svg-container {
+      position: relative;
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto 32px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.09);
+      text-align: center;
+    }
+
+    .tri-svg-container img {
+      width: 100%;
+      max-width: 780px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .tri-vertex-cards {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .tri-vcard {
+      flex: 1;
+      min-width: 220px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.09);
+    }
+
+    .tri-vcard-header {
+      padding: 14px 16px;
+    }
+
+    .tri-vcard-num {
+      font-size: 26px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.35);
+      line-height: 1;
+    }
+
+    .tri-vcard-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .tri-vcard-sub {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-top: 3px;
+    }
+
+    .tri-vcard-body {
+      background: #fff;
+      padding: 14px 16px;
+    }
+
+    .tri-vcard-item {
+      font-size: 12px;
+      color: #4A5568;
+      padding: 5px 0;
+      border-bottom: 1px solid #F0F4F8;
+      display: flex;
+      gap: 7px;
+    }
+
+    .tri-vcard-item:last-child {
+      border-bottom: none;
+    }
+
+    .tri-vcard-item::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .tri-center-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+      margin-bottom: 24px;
+      border: 2px solid #00A8E8;
+      text-align: center;
+    }
+
+    .tri-center-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1F4E79;
+      margin-bottom: 8px;
+    }
+
+    .tri-center-sub {
+      font-size: 12px;
+      color: #64748B;
+      margin-bottom: 16px;
+    }
+
+    .tri-center-kpis {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tri-kpi {
+      background: #EBF3FB;
+      border-radius: 8px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    .tri-kpi-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1F4E79;
+    }
+
+    .tri-kpi-label {
+      font-size: 10px;
+      color: #64748B;
+      margin-top: 2px;
+    }
+
+    .tri-conditions {
+      background: #F8FAFC;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .tri-cond-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1F4E79;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tri-cond-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .tri-cond-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      border-left: 4px solid;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    .tri-cond-label {
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .tri-cond-desc {
+      font-size: 11px;
+      color: #64748B;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .sg-gate-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tri-cond-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tri-vertex-cards {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAVIGATION -->
+  <nav class="nav">
+    <div class="nav-title">Pré-consultation Anesthésie</div>
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="show('contexte')">Contexte</button>
+      <button class="nav-btn" onclick="show('enjeux')">Enjeux</button>
+      <button class="nav-btn" onclick="show('q1val')">Validation stratégique</button>
+      <button class="nav-btn" onclick="show('triangle')">Triangle d'alignement</button>
+      <button class="nav-btn" onclick="show('deploy')">Déploiement</button>
+      <button class="nav-btn" onclick="show('change')">Conduite du changement</button>
+      <button class="nav-btn" onclick="show('interop')">Interopérabilité</button>
+      <button class="nav-btn" onclick="show('gantt')">Gantt</button>
+    </div>
+  </nav>
+
+  <!-- ══ PANEL : CONTEXTE ET OBJECTIFS ══ -->
+  <div class="panel active" id="panel-contexte">
+    <div class="panel-header">
+      <div class="panel-title">Contexte et objectifs de l'étude de cas</div>
+      <div class="panel-sub">Pôle Anesthésie-Réanimation du CHU — 13 spécialités chirurgicales</div>
+    </div>
+
+    <!-- Chiffres clés -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#1F4E79;"></div>
+        <div class="kpi-val" style="color:#1F4E79;">60 000</div>
+        <div class="kpi-label">consultations d'anesthésie / an</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#0F766E;"></div>
+        <div class="kpi-val" style="color:#0F766E;">13</div>
+        <div class="kpi-label">spécialités chirurgicales couvertes</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#6B21A8;"></div>
+        <div class="kpi-val" style="color:#6B21A8;">1</div>
+        <div class="kpi-label">plateforme de télésuivi déjà opérationnelle</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top" style="background:#9A3412;"></div>
+        <div class="kpi-val" style="color:#9A3412;">1</div>
+        <div class="kpi-label">DAI interopérable avec le DPI</div>
+      </div>
+    </div>
+
+    <!-- Description du contexte -->
+    <div class="section-label">Contexte</div>
+    <div
+      style="background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 2px 10px rgba(0,0,0,0.09);margin-bottom:24px;">
+      <p style="font-size:13px;color:#2D3748;line-height:1.8;margin-bottom:14px;">Le Pôle Anesthésie-Réanimation du CHU
+        couvre <strong>13 spécialités chirurgicales</strong> et assure environ <strong>60 000 consultations d'anesthésie
+          par an</strong>. Cette activité génère une pression croissante sur les ressources médicales et secrétariales,
+        dans un contexte national de tension sur les effectifs et de montée en puissance du virage numérique en santé.
+      </p>
+      <p style="font-size:13px;color:#2D3748;line-height:1.8;">L'établissement dispose déjà d'une <strong>plateforme
+          opérationnelle de Télé-suivi</strong> (Robot Numérique, éditeur Intelligence Numérique) et d'un
+        <strong>Dossier d'Anesthésie Informatisé</strong> interopérable avec le Dossier Patient Informatisé (DPI). Ces
+        actifs constituent une base solide pour ce projet.
+      </p>
+    </div>
+
+    <!-- Inefficiences -->
+    <div class="section-label">Inefficiences identifiées</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px;">
+      <div
+        style="flex:1;min-width:260px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.09);">
+        <div style="background:#C62828;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;font-weight:800;color:rgba(255,255,255,0.4);">01</span>
+          <span style="font-size:13px;font-weight:700;color:#fff;">Consultations 100% présentiel</span>
+        </div>
+        <div style="padding:14px 16px;font-size:12.5px;color:#4A5568;line-height:1.6;">Toutes les consultations sont
+          réalisées en présentiel, sans distinction du niveau de risque patient, mobilisant inutilement du temps médical
+          pour des profils à faible risque.</div>
+      </div>
+      <div
+        style="flex:1;min-width:260px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.09);">
+        <div style="background:#E65100;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;font-weight:800;color:rgba(255,255,255,0.4);">02</span>
+          <span style="font-size:13px;font-weight:700;color:#fff;">Double saisie manuelle</span>
+        </div>
+        <div style="padding:14px 16px;font-size:12.5px;color:#4A5568;line-height:1.6;">Le questionnaire patient, bien
+          que disponible sur la plateforme numérique, est recopié manuellement dans le Dossier d'Anesthésie Informatisé,
+          générant des risques d'erreur et une charge secrétariale importante.</div>
+      </div>
+      <div
+        style="flex:1;min-width:260px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.09);">
+        <div style="background:#7B1FA2;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:22px;font-weight:800;color:rgba(255,255,255,0.4);">03</span>
+          <span style="font-size:13px;font-weight:700;color:#fff;">Interopérabilité incomplète</span>
+        </div>
+        <div style="padding:14px 16px;font-size:12.5px;color:#4A5568;line-height:1.6;">L'interopérabilité entre la
+          plateforme de Télé-suivi et le dossier informatisé est incomplète, créant des ruptures dans le parcours
+          numérique.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ PANEL : ENJEUX ══ -->
+  <div class="panel" id="panel-enjeux">
+    <div class="panel-header">
+      <div class="panel-title">Enjeux télésanté et organisationnels</div>
+      <div class="panel-sub">Les 4 dimensions d'enjeux que le projet adresse simultanément</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;">
+
+      <!-- Enjeu stratégique -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
+        <div style="background:linear-gradient(135deg,#1F4E79,#2E75B6);padding:16px 20px;">
+          <div
+            style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;">
+            Enjeu</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px;">Stratégique</div>
+        </div>
+        <div style="padding:16px 20px;">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#1F4E79;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;">Accélération du <strong>virage numérique</strong></span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#1F4E79;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Modernisation</strong> des parcours de soins</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#1F4E79;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;">Amélioration de la <strong>performance
+                hospitalière</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enjeu organisationnel -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
+        <div style="background:linear-gradient(135deg,#0F766E,#14B8A6);padding:16px 20px;">
+          <div
+            style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;">
+            Enjeu</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px;">Organisationnel</div>
+        </div>
+        <div style="padding:16px 20px;">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#0F766E;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Optimisation des flux</strong> patients</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#0F766E;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;">Réduction de la <strong>saturation des
+                consultations</strong></span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#0F766E;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;">Meilleure <strong>coordination</strong> patient–soignant</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enjeu technologique -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
+        <div style="background:linear-gradient(135deg,#6B21A8,#A855F7);padding:16px 20px;">
+          <div
+            style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;">
+            Enjeu</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px;">Technologique</div>
+        </div>
+        <div style="padding:16px 20px;">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#6B21A8;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Intégration</strong> au SI existant</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#6B21A8;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Interopérabilité</strong> avec DPI anesthésie</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#6B21A8;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Sécurisation</strong> des données de santé</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enjeu humain -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
+        <div style="background:linear-gradient(135deg,#9A3412,#EA580C);padding:16px 20px;">
+          <div
+            style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;">
+            Enjeu</div>
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-top:2px;">Humain</div>
+        </div>
+        <div style="padding:16px 20px;">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#9A3412;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Accompagnement</strong> des équipes</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #F0F4F8;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#9A3412;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Acceptation</strong> du changement</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:#9A3412;flex-shrink:0;margin-top:5px;"></span>
+            <span style="font-size:13px;color:#2D3748;"><strong>Évolution</strong> des pratiques médicales</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ PANEL : VALIDATION STRATÉGIQUE (Stage-Gate) ══ -->
+  <div class="panel" id="panel-q1val">
+    <div class="sg-wrap">
+
+      <div class="panel-header">
+        <div class="panel-title">Stage-Gate — Validation stratégique</div>
+        <div class="sg-page-sub">Projet de pré-consultation d'anesthésie (télésuivi) via BOTs Santé</div>
+        <div class="sg-toggle-hint">Cliquer sur une étape ou une « Gate » pour afficher le détail</div>
+      </div>
+
+      <div class="sg-flow">
+
+        <!-- STAGE 1 -->
+        <div class="sg-step" onclick="sgToggleStep(this)">
+          <div class="sg-step-num sg-c1">S1 <span class="sg-label">STAGE</span></div>
+          <div class="sg-step-body">
+            <div class="sg-step-title sg-t1">Qualification de l'opportunité (besoin métier)</div>
+            <div class="sg-step-desc">Qualifier le besoin terrain, cadrer le périmètre, et identifier la valeur attendue
+              (patient / soignants / établissement).</div>
+            <div class="sg-step-items">
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c1"></div><span><strong>Besoin terrain :</strong> volumétrie élevée (≈ 60 000
+                  consultations/an) et contrainte forte sur le temps médical ; service Orthopédie motivé pour un
+                  pilote.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c1"></div><span><strong>Valeur patient :</strong> information à domicile +
+                  questionnaire ; orientation adaptée selon la stratification (MyRISK).</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c1"></div><span><strong>Valeur soignant :</strong> préparation amont ; focus sur
+                  points à risque ; objectif cible : réduire la ressaisie manuelle.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c1"></div><span><strong>Valeur établissement :</strong> efficience du parcours,
+                  amélioration de l'expérience patient, valorisation d'une plateforme déjà disponible.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c1"></div><span><strong>Pré-analyse :</strong> faisabilité macro + premières
+                  hypothèses ; analyse <strong>SWOT</strong> (forces/faiblesses/opportunités/menaces).</span>
+              </div>
+              <div class="sg-step-actors">
+                <span class="sg-actor-tag">Pôle Anesthésie</span>
+                <span class="sg-actor-tag">Service Orthopédie</span>
+                <span class="sg-actor-tag">DSI (projets)</span>
+                <span class="sg-actor-tag">Sponsor médical</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GATE 1 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Gate 1</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-gate" onclick="sgToggleGate(this)">
+          <div class="sg-gate-head">
+            <div class="sg-gate-title">GATE 1 — Go / No Go Opportunité</div>
+            <div class="sg-gate-chip">Décision</div>
+          </div>
+          <div class="sg-gate-body">
+            <div class="sg-gate-grid">
+              <div class="sg-gate-box"><strong>Décideurs</strong>
+                <ul>
+                  <li>DSI (niveau stratégique)</li>
+                  <li>Référent(s) médicaux</li>
+                  <li>Direction fonctionnelle / pôle</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Critères GO</strong>
+                <ul>
+                  <li>Besoin documenté + périmètre clair</li>
+                  <li>Sponsor médical identifié</li>
+                  <li>Valeur attendue crédible (patient/soignant)</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Livrables attendus</strong>
+                <ul>
+                  <li>Note d'opportunité + SWOT</li>
+                  <li>Périmètre / cible / hypothèses KPI</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 2 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Stage 2</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-step" onclick="sgToggleStep(this)">
+          <div class="sg-step-num sg-c2">S2 <span class="sg-label">STAGE</span></div>
+          <div class="sg-step-body">
+            <div class="sg-step-title sg-t2">Analyse d'opportunité & Business Case</div>
+            <div class="sg-step-desc">Chiffrer et argumenter la création de valeur (bénéfices), estimer les
+              coûts/charges, identifier risques et KPI.</div>
+            <div class="sg-step-items">
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c2"></div><span><strong>Bénéfices :</strong> temps médical optimisé, meilleure
+                  préparation consultation, orientation téléconsultation/présentiel selon risque.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c2"></div><span><strong>Organisation :</strong> impacts secrétariat / infirmières
+                  (inclusion, suivi), processus cible à définir.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c2"></div><span><strong>Coûts :</strong> paramétrage, intégration SI, conduite du
+                  changement, support.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c2"></div><span><strong>Risques :</strong> qualité des réponses patients,
+                  acceptabilité, continuité de service, dépendance éditeur.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c2"></div><span><strong>KPI :</strong> taux questionnaires complétés, temps
+                  consultation, satisfaction, taux ressaisie évitée (objectif cible).</span>
+              </div>
+              <div class="sg-step-actors">
+                <span class="sg-actor-tag">DSI</span>
+                <span class="sg-actor-tag">Pôle Anesthésie</span>
+                <span class="sg-actor-tag">Contrôle de gestion</span>
+                <span class="sg-actor-tag">PMO</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GATE 2 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Gate 2</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-gate" onclick="sgToggleGate(this)">
+          <div class="sg-gate-head">
+            <div class="sg-gate-title">GATE 2 — Go / No Go Stratégique (valeur)</div>
+            <div class="sg-gate-chip">Arbitrage</div>
+          </div>
+          <div class="sg-gate-body">
+            <div class="sg-gate-grid">
+              <div class="sg-gate-box"><strong>Décideurs</strong>
+                <ul>
+                  <li>Direction Générale</li>
+                  <li>DSI (stratégique)</li>
+                  <li>CME / représentants médicaux</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Critères GO</strong>
+                <ul>
+                  <li>Valeur démontrée (qualité + performance)</li>
+                  <li>Coûts/charges acceptables</li>
+                  <li>Risques identifiés + plan de maîtrise</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Livrables attendus</strong>
+                <ul>
+                  <li>Business Case + KPI</li>
+                  <li>Analyse risques (macro)</li>
+                  <li>Scénario pilote proposé</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 3 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Stage 3</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-step" onclick="sgToggleStep(this)">
+          <div class="sg-step-num sg-c3">S3 <span class="sg-label">STAGE</span></div>
+          <div class="sg-step-body">
+            <div class="sg-step-title sg-t3">Alignement SDSI & Portefeuille de projets</div>
+            <div class="sg-step-desc">Vérifier l'inscription dans la trajectoire SI (SDSI), la priorisation et l'absence
+              de redondance avec d'autres projets.</div>
+            <div class="sg-step-items">
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c3"></div><span><strong>Alignement SDSI :</strong> digitalisation du parcours
+                  patient, amélioration des usages médico-soignants, ouverture et interopérabilité.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c3"></div><span><strong>Portefeuille :</strong> positionnement, priorité,
+                  dépendances (DPI anesthésie / DPI global, plateforme télésuivi).</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c3"></div><span><strong>Ressources :</strong> disponibilité équipes DSI (projets /
+                  infra / applicatifs) + métiers.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c3"></div><span><strong>Orientations externes :</strong> cohérence avec les
+                  orientations nationales et régionales du numérique en santé.</span>
+              </div>
+              <div class="sg-step-actors">
+                <span class="sg-actor-tag">DSI</span>
+                <span class="sg-actor-tag">PMO</span>
+                <span class="sg-actor-tag">Direction Générale</span>
+                <span class="sg-actor-tag">CME</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GATE 3 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Gate 3</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-gate" onclick="sgToggleGate(this)">
+          <div class="sg-gate-head">
+            <div class="sg-gate-title">GATE 3 — Go / No Go Portefeuille (priorité & ressources)</div>
+            <div class="sg-gate-chip">Priorisation</div>
+          </div>
+          <div class="sg-gate-body">
+            <div class="sg-gate-grid">
+              <div class="sg-gate-box"><strong>Décideurs</strong>
+                <ul>
+                  <li>Comité stratégique SI / COPIL SI</li>
+                  <li>DSI</li>
+                  <li>Direction Générale</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Critères GO</strong>
+                <ul>
+                  <li>Cohérence trajectoire SI (SDSI)</li>
+                  <li>Pas de redondance / fragmentation</li>
+                  <li>Ressources (budget + équipes) disponibles</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Livrables attendus</strong>
+                <ul>
+                  <li>Fiche portefeuille + priorité</li>
+                  <li>Plan macro (jalons) + dépendances</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 4 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Stage 4</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-step" onclick="sgToggleStep(this)">
+          <div class="sg-step-num sg-c4">S4 <span class="sg-label">STAGE</span></div>
+          <div class="sg-step-body">
+            <div class="sg-step-title sg-t4">Sécurité & Conformité (RGPD / gouvernance télésanté)</div>
+            <div class="sg-step-desc">S'assurer du respect du cadre réglementaire et sécurité (données de santé), et
+              définir les exigences de maîtrise des risques.</div>
+            <div class="sg-step-items">
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c4"></div><span><strong>Conformité :</strong> RGPD (DPO) + exigences de sécurité
+                  (RSSI) ; politiques et processus de sécurité (SMSI) selon le cadre établissement.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c4"></div><span><strong>Hébergement :</strong> vérifier les garanties de
+                  protection des données (hébergement conforme aux exigences applicables).</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c4"></div><span><strong>Accès/traçabilité :</strong> gestion des accès,
+                  journalisation, procédures en cas d'incident.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c4"></div><span><strong>Risque médical :</strong> validation clinique du
+                  questionnaire/stratification ; définir responsabilités et circuits d'escalade.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c4"></div><span><strong>Interopérabilité cible :</strong> plan d'intégration
+                  plateforme ↔ dossier anesthésie informatisé (objectif : réduire la ressaisie).</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c4"></div><span><strong>Appui télésanté :</strong> intégration dans la
+                  gouvernance/structure d'appui aux usages (ex : unité télémédecine si existante) pour cohérence
+                  organisationnelle.</span>
+              </div>
+              <div class="sg-step-actors">
+                <span class="sg-actor-tag">RSSI</span>
+                <span class="sg-actor-tag">DPO</span>
+                <span class="sg-actor-tag">DSI</span>
+                <span class="sg-actor-tag">Médecins référents</span>
+                <span class="sg-actor-tag">Éditeur</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GATE 4 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Gate 4</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-gate" onclick="sgToggleGate(this)">
+          <div class="sg-gate-head">
+            <div class="sg-gate-title">GATE 4 — Go / No Go Conformité (sécurité & RGPD)</div>
+            <div class="sg-gate-chip">Validation</div>
+          </div>
+          <div class="sg-gate-body">
+            <div class="sg-gate-grid">
+              <div class="sg-gate-box"><strong>Décideurs</strong>
+                <ul>
+                  <li>RSSI</li>
+                  <li>DPO</li>
+                  <li>DSI</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Critères GO</strong>
+                <ul>
+                  <li>Conformité RGPD validée</li>
+                  <li>Mesures de sécurité définies</li>
+                  <li>Risques acceptables + plan de contrôle</li>
+                </ul>
+              </div>
+              <div class="sg-gate-box"><strong>Livrables attendus</strong>
+                <ul>
+                  <li>Analyse risques + exigences sécurité</li>
+                  <li>Règles d'accès + traçabilité</li>
+                  <li>Exigences d'intégration (interop)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 5 -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Stage 5</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-step" onclick="sgToggleStep(this)">
+          <div class="sg-step-num sg-c5">S5 <span class="sg-label">STAGE</span></div>
+          <div class="sg-step-body">
+            <div class="sg-step-title sg-t5">Présentation en instance & préparation du pilote</div>
+            <div class="sg-step-desc">Consolider le dossier de décision et préparer un pilote (Orthopédie) mesurable
+              avant généralisation.</div>
+            <div class="sg-step-items">
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c5"></div><span><strong>Dossier :</strong> Business Case + alignement
+                  SDSI/portefeuille + conformité + risques + KPI pilote.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c5"></div><span><strong>Gouvernance projet :</strong> chef de projet DSI, référent
+                  métier, PMO ; comités (COPIL/COPROJ) + RACI.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c5"></div><span><strong>Pilote :</strong> périmètre orthopédie, critères
+                  inclusion, parcours cible, support (Service Desk) et plan de communication.</span>
+              </div>
+              <div class="sg-step-item">
+                <div class="sg-dot sg-c5"></div><span><strong>Mesure :</strong> tableau de bord KPI + retour
+                  d'expérience (amélioration continue).</span>
+              </div>
+              <div class="sg-step-actors">
+                <span class="sg-actor-tag">Direction Générale</span>
+                <span class="sg-actor-tag">CME</span>
+                <span class="sg-actor-tag">DSI</span>
+                <span class="sg-actor-tag">PMO</span>
+                <span class="sg-actor-tag">Pôle Anesthésie</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINAL DECISION -->
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Gate final</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+        <div class="sg-decision-wrap">
+          <div class="sg-diamond">GO / NO GO FINAL ?</div>
+        </div>
+        <div class="sg-decision-branch">
+          <div class="sg-branch-card">
+            <div class="sg-branch-header" style="background:#375623">GO — Lancement du pilote</div>
+            <div class="sg-branch-body">Lancement pilote Orthopédie : équipe projet désignée, calendrier + budget
+              validés, KPI pilotage en place.</div>
+          </div>
+          <div class="sg-branch-card">
+            <div class="sg-branch-header" style="background:#C62828">NO GO — Rework / Report</div>
+            <div class="sg-branch-body">Retour à la Gate concernée (valeur, alignement, conformité) : ajustement du
+              dossier, re-présentation en instance.</div>
+          </div>
+        </div>
+
+        <div class="sg-arrow">
+          <div class="sg-arrow-line"></div>
+          <div class="sg-arrow-label">▼ Si GO</div>
+          <div class="sg-arrow-head"></div>
+        </div>
+
+        <!-- CONCLUSION -->
+        <div class="sg-conclusion">
+          <div class="sg-conclusion-header">
+            <h3>Démarrage du projet pilote</h3>
+            <p>Orthopédie · Plateforme mutualisée de télésuivi (BOTs Santé)</p>
+          </div>
+          <div class="sg-conclusion-body">
+            <div class="sg-deliverable"><strong>Livrables pilote</strong><span>Paramétrage BOT, processus cible,
+                tests/recette, kit formation, supports & procédures.</span></div>
+            <div class="sg-deliverable"><strong>Pilotage (KPI)</strong><span>Taux complétion, temps médical gagné,
+                satisfaction, incidents, taux ressaisie évitée (objectif cible).</span></div>
+            <div class="sg-deliverable"><strong>Décision d'extension</strong><span>Après REX et résultats KPI :
+                généralisation aux autres spécialités anesthésie.</span></div>
+          </div>
+        </div>
+
+      </div><!-- /sg-flow -->
+
+      <!-- LÉGENDE -->
+      <div class="sg-legend">
+        <div class="sg-legend-item">
+          <div class="sg-legend-dot sg-c1"></div>Stage 1 — Opportunité
+        </div>
+        <div class="sg-legend-item">
+          <div class="sg-legend-dot sg-c2"></div>Stage 2 — Business Case
+        </div>
+        <div class="sg-legend-item">
+          <div class="sg-legend-dot sg-c3"></div>Stage 3 — Alignement SDSI / Portefeuille
+        </div>
+        <div class="sg-legend-item">
+          <div class="sg-legend-dot sg-c4"></div>Stage 4 — Sécurité / RGPD / Gouvernance télésanté
+        </div>
+        <div class="sg-legend-item">
+          <div class="sg-legend-dot sg-c5"></div>Stage 5 — Instance & Pilote
+        </div>
+      </div>
+
+    </div><!-- /sg-wrap -->
+  </div>
+
+  <!-- ══ PANEL : TRIANGLE D'ALIGNEMENT ══ -->
+  <div class="panel" id="panel-triangle">
+    <div class="tri-wrap">
+
+      <div class="panel-header">
+        <div class="panel-title">Triangle d'alignement stratégique</div>
+        <div class="panel-sub">Les 3 conditions d'alignement que le projet doit satisfaire simultanément pour obtenir le
+          GO</div>
+      </div>
+
+      <!-- SVG TRIANGLE -->
+      <div class="tri-svg-container">
+        <img src="Triangle d'alignement.png" alt="Triangle d'alignement">
+      </div>
+
+      <!-- 3 VERTEX CARDS -->
+      <div class="tri-vertex-cards">
+
+        <div class="tri-vcard">
+          <div class="tri-vcard-header" style="background:#1F4E79;">
+            <div class="tri-vcard-num">01</div>
+            <div class="tri-vcard-title">VALEUR — Opportunité & Business Case</div>
+            <div class="tri-vcard-sub">Stages 1 & 2 · Gates 1 & 2</div>
+          </div>
+          <div class="tri-vcard-body">
+            <div class="tri-vcard-item" style="--dot:#1F4E79;"><span>Besoin documenté : 60 000 consultations/an,
+                pression temps médical</span></div>
+            <div class="tri-vcard-item"><span>Valeur patient : questionnaire à domicile, orientation MyRISK</span></div>
+            <div class="tri-vcard-item"><span>Valeur soignant : suppression ressaisie, focus cas complexes</span></div>
+            <div class="tri-vcard-item"><span>Business Case : bénéfices, coûts, risques, KPI chiffrés</span></div>
+            <div class="tri-vcard-item"><span>Sponsor médical identifié — service pilote volontaire</span></div>
+          </div>
+        </div>
+
+        <div class="tri-vcard">
+          <div class="tri-vcard-header" style="background:#0F766E;">
+            <div class="tri-vcard-num">02</div>
+            <div class="tri-vcard-title">ALIGNEMENT — SDSI & Portefeuille</div>
+            <div class="tri-vcard-sub">Stage 3 · Gate 3</div>
+          </div>
+          <div class="tri-vcard-body">
+            <div class="tri-vcard-item" style="--dot:#0F766E;"><span>Inscrit dans la feuille de route SDSI
+                (digitalisation parcours patient)</span></div>
+            <div class="tri-vcard-item"><span>Amélioration des usages médico-soignants + interopérabilité</span></div>
+            <div class="tri-vcard-item"><span>Cohérence portefeuille SI — pas de redondance avec DPI/DAI</span></div>
+            <div class="tri-vcard-item"><span>Ressources DSI disponibles (budget + équipes)</span></div>
+            <div class="tri-vcard-item"><span>Alignement orientations nationales : Ma Santé 2022, Ségur</span></div>
+          </div>
+        </div>
+
+        <div class="tri-vcard">
+          <div class="tri-vcard-header" style="background:#6B21A8;">
+            <div class="tri-vcard-num">03</div>
+            <div class="tri-vcard-title">CONFORMITÉ — RGPD, HDS & Gouvernance</div>
+            <div class="tri-vcard-sub">Stage 4 · Gate 4</div>
+          </div>
+          <div class="tri-vcard-body">
+            <div class="tri-vcard-item" style="--dot:#6B21A8;"><span>RGPD : minimisation des données, DPO impliqué dès
+                la conception</span></div>
+            <div class="tri-vcard-item"><span>HDS : hébergement certifié, chiffrement transit et repos</span></div>
+            <div class="tri-vcard-item"><span>RSSI : accès, traçabilité, procédures incident, SMSI</span></div>
+            <div class="tri-vcard-item"><span>Gouvernance télésanté : Robot Numérique référencé, UMTT</span></div>
+            <div class="tri-vcard-item"><span>Interopérabilité cible validée : plan plateforme ↔ DAI</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CENTRE — PROJET -->
+      <div class="tri-center-card">
+        <div class="tri-center-title">Projet au centre du triangle — Pré-consultation Anesthésie via BOTs Santé</div>
+        <div class="tri-center-sub">Le GO est accordé uniquement lorsque les 3 sommets sont validés simultanément (Stage
+          5 · Gate finale COPIL)</div>
+        <div class="tri-center-kpis">
+          <div class="tri-kpi">
+            <div class="tri-kpi-val" style="color:#1F4E79">60 000</div>
+            <div class="tri-kpi-label">consultations/an</div>
+          </div>
+          <div class="tri-kpi">
+            <div class="tri-kpi-val" style="color:#0F766E">100%</div>
+            <div class="tri-kpi-label">dossiers auto-alimentés</div>
+          </div>
+          <div class="tri-kpi">
+            <div class="tri-kpi-val" style="color:#6B21A8">5</div>
+            <div class="tri-kpi-label">Gates franchies</div>
+          </div>
+          <div class="tri-kpi">
+            <div class="tri-kpi-val" style="color:#9A3412">M6</div>
+            <div class="tri-kpi-label">GO pilote Orthopédie</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONDITIONS D'ALIGNEMENT -->
+      <div class="tri-conditions">
+        <div class="tri-cond-title">Conditions d'alignement</div>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;align-items:flex-start;gap:10px;"><span
+              style="width:8px;height:8px;border-radius:50%;background:#1F4E79;flex-shrink:0;margin-top:5px;"></span><span
+              style="font-size:13px;color:#2D3748;"><strong style="color:#1F4E79;">Valeur démontrée</strong> — Business
+              Case avec gains mesurables, KPI définis, sponsor médical engagé</span></li>
+          <li style="display:flex;align-items:flex-start;gap:10px;"><span
+              style="width:8px;height:8px;border-radius:50%;background:#0F766E;flex-shrink:0;margin-top:5px;"></span><span
+              style="font-size:13px;color:#2D3748;"><strong style="color:#0F766E;">Alignement SDSI</strong> — Inscrit
+              dans un axe SDSI, ressources disponibles, pas de redondance portefeuille</span></li>
+          <li style="display:flex;align-items:flex-start;gap:10px;"><span
+              style="width:8px;height:8px;border-radius:50%;background:#6B21A8;flex-shrink:0;margin-top:5px;"></span><span
+              style="font-size:13px;color:#2D3748;"><strong style="color:#6B21A8;">Conformité & gouvernance</strong> —
+              RGPD/HDS respectés, RSSI/DPO validés, solution référencée Télésanté</span></li>
+          <li style="display:flex;align-items:flex-start;gap:10px;"><span
+              style="width:8px;height:8px;border-radius:50%;background:#F6A800;flex-shrink:0;margin-top:5px;"></span><span
+              style="font-size:13px;color:#2D3748;"><strong style="color:#7A4F00;">Si un sommet KO</strong> — NO GO,
+              retour à la phase en défaut</span></li>
+          <li style="display:flex;align-items:flex-start;gap:10px;"><span
+              style="width:8px;height:8px;border-radius:50%;background:#375623;flex-shrink:0;margin-top:5px;"></span><span
+              style="font-size:13px;color:#2D3748;"><strong style="color:#375623;">3 sommets OK</strong> — Gate 5 COPIL
+              → GO FINAL, lancement pilote Orthopédie</span></li>
+          <li style="display:flex;align-items:flex-start;gap:10px;"><span
+              style="width:8px;height:8px;border-radius:50%;background:#00A8E8;flex-shrink:0;margin-top:5px;"></span><span
+              style="font-size:13px;color:#2D3748;"><strong style="color:#0284C7;">Après le GO</strong> — Réévaluation
+              sur les 3 axes à chaque jalon clé</span></li>
+        </ul>
+      </div>
+
+    </div><!-- /tri-wrap -->
+  </div>
+
+  <!-- ══ PANEL : DEPLOIEMENT ══ -->
+  <div class="panel" id="panel-deploy">
+    <div class="panel-header">
+      <div class="panel-title">Methodologie de deploiement — 7 etapes</div>
+      <div class="panel-sub">Du cadrage initial a l'exploitation en mode run</div>
+    </div>
+    <p class="hint">Cliquer sur chaque etape pour afficher le detail</p>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot c-blue">1</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-blue">Cadrage</div>
+              <div class="tl-hdesc">Perimetre · KPI · Gouvernance (COPIL/COPROJ)</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-blue bc-blue">Perimetre</div>
+              <div class="tl-col-item"><span>Tele-suivi uniquement en amont de la pre-consultation anesthesie</span>
+              </div>
+              <div class="tl-col-item"><span>Service pilote : Chirurgie Orthopedique (volontaire)</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-blue bc-blue">KPI</div>
+              <div class="tl-col-item"><span>Taux de questionnaires completes</span></div>
+              <div class="tl-col-item"><span>% dossiers alimentes automatiquement</span></div>
+              <div class="tl-col-item"><span>Temps administratif reduit</span></div>
+              <div class="tl-col-item"><span>Satisfaction patient et soignant</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-blue bc-blue">Gouvernance</div>
+              <div class="tl-col-item"><span>COPIL : Direction Generale, CME, DSI, Pole Anesthesie</span></div>
+              <div class="tl-col-item"><span>COPROJ : Chef projet DSI, Medecin referent, Secretariat, RSSI/DPO</span>
+              </div>
+              <div class="tl-col-item"><span>PMO : pilotage, suivi charge, reporting</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">Direction Generale</span><span class="actor">DSI</span><span
+                class="actor">CME</span><span class="actor">Pole Anesthesie</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot c-mid">2</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-mid">Conception fonctionnelle</div>
+              <div class="tl-hdesc">Questionnaire · Score MyRISK · Parcours patient complet</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-mid bc-mid">Questionnaire</div>
+              <div class="tl-col-item"><span>Questions indispensables avec les anesthesistes</span></div>
+              <div class="tl-col-item"><span>Vocabulaire adapte au patient (non medical)</span></div>
+              <div class="tl-col-item"><span>Cas particuliers et exceptions valides</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-mid bc-mid">Score MyRISK</div>
+              <div class="tl-col-item"><span>Seuils Vert / Orange / Rouge — criteres et ponderations</span></div>
+              <div class="tl-col-item"><span>Regles d'orientation (presentiel vs teleconsultation)</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-mid bc-mid">Parcours</div>
+              <div class="tl-col-item"><span>Inclusion : declencheur, mail invitation, delais</span></div>
+              <div class="tl-col-item"><span>Relances automatiques (J+2, J+5...)</span></div>
+              <div class="tl-col-item"><span>Gestion des non-reponses et seuil de bascule presentiel</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">Medecin anesthesiste referent</span><span
+                class="actor">Secretariat</span><span class="actor">DSI</span><span class="actor">Editeur</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot c-teal">3</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-teal">Conception technique & conformite</div>
+              <div class="tl-hdesc">Authentification · Habilitations · RGPD · SSI</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-teal bc-teal">Technique patient</div>
+              <div class="tl-col-item"><span>Authentification patient (lien securise, identite)</span></div>
+              <div class="tl-col-item"><span>Lien d'invitation et enrolement sur la plateforme</span></div>
+              <div class="tl-col-item"><span>Parcours mobile-first (accessibilite)</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-teal bc-teal">Technique professionnel</div>
+              <div class="tl-col-item"><span>Habilitations et gestion des acces par role</span></div>
+              <div class="tl-col-item"><span>Tracabilite : qui a vu quoi, quand</span></div>
+              <div class="tl-col-item"><span>Interconnexion avec Dossier Anesthesie Informatise</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-teal bc-teal">Conformite</div>
+              <div class="tl-col-item"><span>RGPD : minimisation, information patient, durees conservation</span></div>
+              <div class="tl-col-item"><span>HDS : hebergement donnees sante certifie</span></div>
+              <div class="tl-col-item"><span>SSI : audit securite, gestion incidents, PCA</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">RSSI</span><span class="actor">DPO</span><span
+                class="actor">DSI</span><span class="actor">Editeur</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot c-purple">4</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-purple">Parametrage + Realisation + Tests</div>
+              <div class="tl-hdesc">Config SaaS · Flux dossier anesthesie · Recette 4 axes</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-purple bc-purple">Parametrage SaaS</div>
+              <div class="tl-col-item"><span>Questionnaire BOT — arbre de decision</span></div>
+              <div class="tl-col-item"><span>Contenus information patient (videos, notices)</span></div>
+              <div class="tl-col-item"><span>Regles score MyRISK et synthese automatique</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-purple bc-purple">Developpement echanges</div>
+              <div class="tl-col-item"><span>Flux plateforme → Dossier Anesthesie</span></div>
+              <div class="tl-col-item"><span>Flux Dossier → plateforme (type RDV, consignes)</span></div>
+              <div class="tl-col-item"><span>Identitovigilance et controle coherence</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-purple bc-purple">Recette 4 axes</div>
+              <div class="tl-col-item"><span>Fonctionnelle : parcours patient, score, synthese</span></div>
+              <div class="tl-col-item"><span>Technique : flux d'integration inter-systemes</span></div>
+              <div class="tl-col-item"><span>Securite : habilitations, traces, chiffrement</span></div>
+              <div class="tl-col-item"><span>Charge : tests basiques selon volume</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">DSI</span><span class="actor">Editeur</span><span
+                class="actor">Medecin referent</span><span class="actor">Secretariat</span><span
+                class="actor">RSSI</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot c-orange">5</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-orange">Pilote puis Generalisation</div>
+              <div class="tl-hdesc">Orthopedie d'abord — Mesure KPI — Extension 12 specialites</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-orange bc-orange">Phase pilote Orthopedie</div>
+              <div class="tl-col-item"><span>Valider le parcours reel (patient + secretariat + anesthesiste)</span>
+              </div>
+              <div class="tl-col-item"><span>Mesurer les KPI definis en cadrage</span></div>
+              <div class="tl-col-item"><span>Identifier les points de friction et ajuster</span></div>
+              <div class="tl-col-item"><span>Duree recommandee : 2 a 3 mois minimum</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-orange bc-orange">Criteres GO generalisation</div>
+              <div class="tl-col-item"><span>KPI atteints ou en voie (taux completion, orientation)</span></div>
+              <div class="tl-col-item"><span>Satisfaction equipes suffisante (enquete)</span></div>
+              <div class="tl-col-item"><span>Stabilite technique confirmee, incidents resolus</span></div>
+              <div class="tl-col-item"><span>Validation COPIL pour generalisation</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">COPIL</span><span class="actor">Pole Anesthesie</span><span
+                class="actor">DSI</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot c-sky">6</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-sky">Mise en production + Hypercare + Exploitation</div>
+              <div class="tl-hdesc">Go-live · Support renforce J+30 · Mode run continu</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-sky bc-sky">Go-live</div>
+              <div class="tl-col-item"><span>Bascule en production apres recette validee</span></div>
+              <div class="tl-col-item"><span>Communication J-7 aux equipes et patients</span></div>
+              <div class="tl-col-item"><span>Presence DSI sur site le Jour J</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-sky bc-sky">Hypercare (J a J+30)</div>
+              <div class="tl-col-item"><span>Support renforce : point de contact unique</span></div>
+              <div class="tl-col-item"><span>Correction rapide incidents (SLA renforce)</span></div>
+              <div class="tl-col-item"><span>Reunion de bilan hebdomadaire</span></div>
+            </div>
+            <div class="tl-col">
+              <div class="tl-col-title tc-sky bc-sky">Mode run</div>
+              <div class="tl-col-item"><span>Gestion incidents et demandes (ITSM)</span></div>
+              <div class="tl-col-item"><span>Tableaux de bord KPI mensuels</span></div>
+              <div class="tl-col-item"><span>Comite amelioration continue trimestriel</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">DSI (support)</span><span class="actor">Editeur</span><span
+                class="actor">Super-users</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot c-green">7</div>
+        <div class="tl-card" onclick="toggleCard(this)">
+          <div class="tl-header">
+            <div>
+              <div class="tl-htitle tc-green">Generalisation — 12 specialites</div>
+              <div class="tl-hdesc">Extension progressive — vague par vague</div>
+            </div>
+            <div class="tl-toggle">v</div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-col">
+              <div class="tl-col-title tc-green bc-green">Plan d'extension</div>
+              <div class="tl-col-item"><span>Extension progressive aux 12 autres specialites</span></div>
+              <div class="tl-col-item"><span>3 a 4 services par mois, formation replicable</span></div>
+              <div class="tl-col-item"><span>Capitalisation sur le REX du pilote Orthopedie</span></div>
+            </div>
+            <div class="actors-row"><span class="actor">DSI</span><span class="actor">Poles chirurgicaux</span><span
+                class="actor">COPIL</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ PANEL : CONDUITE DU CHANGEMENT ══ -->
+  <div class="panel" id="panel-change">
+    <div class="panel-header">
+      <div class="panel-title">Accompagnement des metiers — Conduite du changement</div>
+      <div class="panel-sub">Du processus actuel au nouveau parcours numerique — 6 leviers d'action</div>
+    </div>
+
+    <div class="section-label">Avant / Apres</div>
+    <div class="avant-apres">
+      <div class="aa-col">
+        <div class="aa-header c-red">AVANT — Processus actuel</div>
+        <div class="aa-body">
+          <div class="aa-item" style="--dot:#991B1B"><span>Convocation en presentiel systematique, sans tri par niveau
+              de risque</span></div>
+          <div class="aa-item"><span>Questionnaire papier rempli en salle d'attente</span></div>
+          <div class="aa-item"><span>Secretaire recopie manuellement dans le dossier anesthesie</span></div>
+          <div class="aa-item"><span>Risque d'erreur de saisie et charge administrative elevee</span></div>
+          <div class="aa-item"><span>Anesthesiste consulte tous les profils y compris faible risque</span></div>
+          <div class="aa-item"><span>Aucune stratification automatique du risque</span></div>
+        </div>
+      </div>
+      <div class="aa-col" style="border-left:3px solid #E2E8F0">
+        <div class="aa-header c-green">APRES — Nouveau parcours numerique</div>
+        <div class="aa-body">
+          <div class="aa-item"><span>Invitation numerique — patient complete son questionnaire a domicile</span></div>
+          <div class="aa-item"><span>BOT conversationnel guide le patient (vocabulaire adapte, relances auto)</span>
+          </div>
+          <div class="aa-item"><span>Score MyRISK calcule automatiquement — Vert/teleconsultation,
+              Orange-Rouge/presentiel</span></div>
+          <div class="aa-item"><span>Reponses et synthese integrees automatiquement dans le dossier — zero
+              recopie</span></div>
+          <div class="aa-item"><span>Consultation anesthesiste centree sur les cas complexes</span></div>
+          <div class="aa-item"><span>Secretariat reoriente vers la coordination et l'aide aux patients</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">6 leviers de conduite du changement</div>
+    <div class="cc-grid">
+      <div class="cc-card">
+        <div class="cc-header c-blue">
+          <div class="cc-num">01</div>
+          <div class="cc-htitle">Co-construction</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-item">Ateliers avec anesthesistes pour valider questionnaire et regles MyRISK</div>
+          <div class="cc-item">Implication des secretaires medicales dans la conception du parcours</div>
+          <div class="cc-item">Participation des IDEP pour l'accompagnement patient</div>
+          <div class="cc-item">Validation iterative : prototypes, retours, ajustements</div>
+        </div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-header c-mid">
+          <div class="cc-num">02</div>
+          <div class="cc-htitle">Referents metier (super-users)</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-item">1 super-user anesthesiste par service deploye</div>
+          <div class="cc-item">1 super-user secretariat (referent plateau administratif)</div>
+          <div class="cc-item">Formation approfondie en amont du deploiement</div>
+          <div class="cc-item">Relais de proximite pour les questions quotidiennes</div>
+        </div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-header c-green">
+          <div class="cc-num">03</div>
+          <div class="cc-htitle">Formation courte et ciblee</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-item">Secretariat : inclusion patient, envoi invitation, suivi non-repondeurs</div>
+          <div class="cc-item">Anesthesistes : lecture score MyRISK, gestion exceptions, consultation adaptee</div>
+          <div class="cc-item">IDEP : aide a l'inclusion des patients a faible autonomie numerique</div>
+          <div class="cc-item">Format court 1-2h + fiche reflexe + support visuel</div>
+        </div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-header c-orange">
+          <div class="cc-num">04</div>
+          <div class="cc-htitle">Communication multicanale</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-item">Professionnels : note de service, reunion de service, affichage</div>
+          <div class="cc-item">Patients : courrier/mail d'information avant l'invitation numerique</div>
+          <div class="cc-item">Video de presentation disponible sur la plateforme</div>
+          <div class="cc-item">Communication axee sur les benefices patient (gain de temps, domicile)</div>
+        </div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-header c-sky">
+          <div class="cc-num">05</div>
+          <div class="cc-htitle">Support organise</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-item">Point de contact unique pendant la phase pilote</div>
+          <div class="cc-item">Procedures degradees documentees (panne, non-repondeur)</div>
+          <div class="cc-item">FAQ accessible depuis l'intranet</div>
+          <div class="cc-item">Ticketing simplifie pour remonter les incidents</div>
+        </div>
+      </div>
+      <div class="cc-card">
+        <div class="cc-header c-purple">
+          <div class="cc-num">06</div>
+          <div class="cc-htitle">Retour d'experience (REX)</div>
+        </div>
+        <div class="cc-body">
+          <div class="cc-item">Reunion REX a J+15 et J+30 apres chaque deploiement service</div>
+          <div class="cc-item">Enquete satisfaction equipes (questionnaire court)</div>
+          <div class="cc-item">Enquete satisfaction patients (NPS sur la plateforme)</div>
+          <div class="cc-item">Ajustements rapides si necessaire</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL : INTEROPERABILITE ══ -->
+  <div class="panel" id="panel-interop">
+    <div class="panel-header">
+      <div class="panel-title">Interoperabilite — Schema cible</div>
+      <div class="panel-sub">Integration automatique bidirectionnelle — zero double saisie</div>
+    </div>
+
+    <div class="section-label">Schema des flux cibles</div>
+    <div
+      style="background:#FEE2E2;border-left:4px solid #991B1B;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px;font-weight:600;color:#7F1D1D;">
+      Situation actuelle : double saisie manuelle — risque erreur de saisie + charge secretariale importante
+    </div>
+
+    <div class="interop-flow">
+      <div class="ibox">
+        <div class="ibox-header c-blue">
+          <div class="ibox-title">Patient</div>
+          <div class="ibox-sub">Domicile</div>
+        </div>
+        <div class="ibox-body">
+          <div class="ibox-item">Invitation par email</div>
+          <div class="ibox-item">Questionnaire BOT conversationnel</div>
+          <div class="ibox-item">Saisie unique cote patient</div>
+        </div>
+      </div>
+      <div class="arrow-col">
+        <div class="arrow-line" style="background:#2E75B6; height:2px;"></div>
+        <div class="arrow-label tc-mid">HL7 FHIR / API REST</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-header c-mid">
+          <div class="ibox-title">Robot Numerique</div>
+          <div class="ibox-sub">Plateforme SaaS — BOTs Sante</div>
+        </div>
+        <div class="ibox-body">
+          <div class="ibox-item">Calcul score MyRISK automatique</div>
+          <div class="ibox-item">Synthese structuree generee</div>
+          <div class="ibox-item">Gestion relances et non-repondeurs</div>
+          <div class="ibox-item">Horodatage et tracabilite complete</div>
+        </div>
+      </div>
+      <div class="arrow-col">
+        <div class="arrow-line" style="background:#6B21A8; height:2px;"></div>
+        <div class="arrow-label tc-purple">Reponses + Score + Synthese + INS</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-header c-purple">
+          <div class="ibox-title">Dossier Anesthesie</div>
+          <div class="ibox-sub">DAI — Informatise</div>
+        </div>
+        <div class="ibox-body">
+          <div class="ibox-item">Reception automatique des donnees</div>
+          <div class="ibox-item">0 recopie manuelle secretariat</div>
+          <div class="ibox-item">Score disponible pour l'anesthesiste</div>
+          <div class="ibox-item">Interoperabilite vers DPI existante</div>
+        </div>
+      </div>
+      <div class="arrow-col">
+        <div class="arrow-line" style="background:#0F766E; height:2px;"></div>
+        <div class="arrow-label tc-teal">Interop existante</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-header c-teal">
+          <div class="ibox-title">DPI</div>
+          <div class="ibox-sub">Dossier Patient Informatise</div>
+        </div>
+        <div class="ibox-body">
+          <div class="ibox-item">Consultation dossier complet</div>
+          <div class="ibox-item">Donnees anesthesie integrees</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;">
+      <div
+        style="flex:1;min-width:260px;background:#DCFCE7;border-left:4px solid #166534;border-radius:8px;padding:14px 16px;">
+        <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:6px;">Flux sortant — Plateforme vers
+          Dossier Anesthesie</div>
+        <div style="font-size:11.5px;color:#14532D;">Reponses structurees · Score MyRISK · Synthese automatique ·
+          Horodatage · INS · Statut questionnaire</div>
+      </div>
+      <div
+        style="flex:1;min-width:260px;background:#EBF3FB;border-left:4px solid #2E75B6;border-radius:8px;padding:14px 16px;">
+        <div style="font-size:12px;font-weight:700;color:#1F4E79;margin-bottom:6px;">Flux entrant — Dossier Anesthesie
+          vers Plateforme</div>
+        <div style="font-size:11.5px;color:#1F4E79;">Statut consultation · Type de RDV · Date de convocation · Consignes
+          pre-operatoires</div>
+      </div>
+    </div>
+
+    <div class="section-label">Exigences de securite transverses</div>
+    <div class="sec-grid">
+      <div class="sec-card bc-blue">
+        <div class="sec-label tc-blue">Identitovigilance</div>
+        <div class="sec-desc">INS sur tous les echanges. Controle de coherence identitaire obligatoire avant toute
+          transmission.</div>
+      </div>
+      <div class="sec-card bc-teal">
+        <div class="sec-label tc-teal">Tracabilite</div>
+        <div class="sec-desc">Horodatage de chaque action. Logs d'acces complets. Piste d'audit conforme HDS et RGPD.
+        </div>
+      </div>
+      <div class="sec-card bc-purple">
+        <div class="sec-label tc-purple">Habilitations (RBAC)</div>
+        <div class="sec-desc">Controle d'acces par role : patient, professionnel, secretariat, administrateur.</div>
+      </div>
+      <div class="sec-card bc-orange">
+        <div class="sec-label tc-orange">RGPD</div>
+        <div class="sec-desc">Minimisation des donnees. Information patient documentee. Durees de conservation definies.
+          DPA signe avec l'editeur.</div>
+      </div>
+      <div class="sec-card bc-red">
+        <div class="sec-label tc-red">HDS</div>
+        <div class="sec-desc">Hebergeur Donnees de Sante certifie. Chiffrement TLS en transit et au repos.</div>
+      </div>
+      <div class="sec-card bc-green">
+        <div class="sec-label tc-green">Standards interop</div>
+        <div class="sec-desc">HL7 FHIR ou API REST securisee. INS, MSSante, Pro Sante Connect. Compatible GRADeS TeleO.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL : GANTT & KPI ══ -->
+  <div class="panel" id="panel-gantt">
+    <div class="panel-header">
+      <div class="panel-title">Planning & KPI</div>
+    </div>
+
+    <div class="section-label">Diagramme de Gantt — 12 mois</div>
+    <div class="gantt-wrap">
+      <table class="gantt-table">
+        <thead>
+          <tr>
+            <th>Etape</th>
+            <th>M1</th>
+            <th>M2</th>
+            <th>M3</th>
+            <th>M4</th>
+            <th>M5</th>
+            <th>M6</th>
+            <th>M7</th>
+            <th>M8</th>
+            <th>M9</th>
+            <th>M10</th>
+            <th>M11</th>
+            <th>M12</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="tc-blue" style="font-weight:700">1. Cadrage</td>
+            <td>
+              <div class="gantt-bar" style="background:#1F4E79">CADRAGE</div>
+            </td>
+            <td colspan="11"></td>
+          </tr>
+          <tr>
+            <td class="tc-mid" style="font-weight:700">2. Conception fonct.</td>
+            <td></td>
+            <td colspan="2">
+              <div class="gantt-bar" style="background:#2E75B6"></div>
+            </td>
+            <td colspan="9"></td>
+          </tr>
+          <tr>
+            <td class="tc-teal" style="font-weight:700">3. Conception tech.</td>
+            <td colspan="2"></td>
+            <td colspan="2">
+              <div class="gantt-bar" style="background:#0F766E"></div>
+            </td>
+            <td colspan="8"></td>
+          </tr>
+          <tr>
+            <td class="tc-purple" style="font-weight:700">4. Parametrage+Tests</td>
+            <td colspan="3"></td>
+            <td colspan="2">
+              <div class="gantt-bar" style="background:#6B21A8"></div>
+            </td>
+            <td colspan="7"></td>
+          </tr>
+          <tr>
+            <td class="tc-orange" style="font-weight:700">5. Pilote Orthopedie</td>
+            <td colspan="5"></td>
+            <td colspan="3">
+              <div class="gantt-bar" style="background:#9A3412">PILOTE</div>
+            </td>
+            <td colspan="4"></td>
+          </tr>
+          <tr>
+            <td style="color:#9A3412;font-weight:400;font-size:11px"> REX + ajustements</td>
+            <td colspan="7"></td>
+            <td colspan="1">
+              <div class="gantt-bar" style="background:#C2632A"></div>
+            </td>
+            <td colspan="4"></td>
+          </tr>
+          <tr>
+            <td class="tc-sky" style="font-weight:700">6. Mise en production</td>
+            <td colspan="8"></td>
+            <td>
+              <div class="gantt-bar" style="background:#0284C7">GO PROD</div>
+            </td>
+            <td colspan="3"></td>
+          </tr>
+          <tr>
+            <td style="color:#0284C7;font-weight:400;font-size:11px"> Hypercare</td>
+            <td colspan="8"></td>
+            <td colspan="2">
+              <div class="gantt-bar" style="background:#38BDF8"></div>
+            </td>
+            <td colspan="2"></td>
+          </tr>
+          <tr>
+            <td class="tc-green" style="font-weight:700">7. Generalisation</td>
+            <td colspan="9"></td>
+            <td colspan="3">
+              <div class="gantt-bar" style="background:#166534">GENERALISATION</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+        <div><span class="milestone" style="background:#9A3412">GO Pilote — M6</span></div>
+        <div><span class="milestone" style="background:#0284C7">GO Production — M9</span></div>
+        <div><span class="milestone" style="background:#166534">GO Generalisation — M10</span></div>
+      </div>
+    </div>
+
+    <div class="section-label">Matrice de répartition des tâches</div>
+    <div class="gantt-wrap">
+      <table class="gantt-table" style="table-layout:fixed;">
+        <thead>
+          <tr>
+            <th style="width:180px;text-align:left;padding-left:12px;">Tâches / Phases</th>
+            <th style="background:#1F4E79;">PMO / Chef de Projet DSI</th>
+            <th style="background:#0F766E;">Équipe Médicale (Ortho/Anesthésie)</th>
+            <th style="background:#6B21A8;">Éditeur (Intelligence Numérique)</th>
+            <th style="background:#9A3412;">Équipe Technique DSI (Interop/Sécurité)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:700;color:#1F4E79;">Spécifications &amp; Workflows</td>
+            <td style="text-align:center;font-size:11px;background:#EBF3FB;color:#1F4E79;font-weight:600;">Pilote &amp;
+              Coordonne</td>
+            <td style="text-align:center;font-size:11px;background:#CCFBF1;color:#0F766E;font-weight:600;">Définit le
+              besoin (questions médicales)</td>
+            <td style="text-align:center;font-size:11px;background:#F3E8FF;color:#6B21A8;font-weight:600;">Conseille sur
+              l'outil</td>
+            <td style="text-align:center;font-size:11px;background:#FFEDD5;color:#9A3412;font-weight:600;">Valide la
+              faisabilité (RSSI/DPO)</td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:#1F4E79;">Paramétrage du Chatbot</td>
+            <td style="text-align:center;font-size:11px;background:#EBF3FB;color:#1F4E79;font-weight:600;">Suit
+              l'avancement</td>
+            <td style="text-align:center;font-size:11px;background:#CCFBF1;color:#0F766E;font-weight:600;">Valide
+              l'arbre décisionnel</td>
+            <td style="text-align:center;font-size:11px;background:#F3E8FF;color:#6B21A8;font-weight:700;">Réalise</td>
+            <td style="text-align:center;font-size:11px;background:#FFEDD5;color:#9A3412;font-weight:600;">Vérifie
+              l'hébergement HDS</td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:#1F4E79;">Développement Interopérabilité</td>
+            <td style="text-align:center;font-size:11px;background:#EBF3FB;color:#1F4E79;font-weight:600;">Coordonne
+            </td>
+            <td style="text-align:center;font-size:11px;background:#F8FAFC;color:#94A3B8;">N/A</td>
+            <td style="text-align:center;font-size:11px;background:#F3E8FF;color:#6B21A8;font-weight:600;">Développe les
+              API (Sortie)</td>
+            <td style="text-align:center;font-size:11px;background:#FFEDD5;color:#9A3412;font-weight:700;">Développe les
+              flux (Entrée SIH)</td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:#1F4E79;">Tests</td>
+            <td style="text-align:center;font-size:11px;background:#EBF3FB;color:#1F4E79;font-weight:600;">Organise les
+              sessions</td>
+            <td style="text-align:center;font-size:11px;background:#CCFBF1;color:#0F766E;font-weight:600;">Teste le
+              scoring « MyRISK »</td>
+            <td style="text-align:center;font-size:11px;background:#F3E8FF;color:#6B21A8;font-weight:600;">Corrige les
+              anomalies</td>
+            <td style="text-align:center;font-size:11px;background:#FFEDD5;color:#9A3412;font-weight:600;">Teste
+              l'intégration au dossier anesthésie</td>
+          </tr>
+          <tr>
+            <td style="font-weight:700;color:#1F4E79;">Formation &amp; Déploiement</td>
+            <td style="text-align:center;font-size:11px;background:#EBF3FB;color:#1F4E79;font-weight:600;">Planifie</td>
+            <td style="text-align:center;font-size:11px;background:#CCFBF1;color:#0F766E;font-weight:600;">Se forme
+              &amp; Utilise</td>
+            <td style="text-align:center;font-size:11px;background:#F3E8FF;color:#6B21A8;font-weight:600;">Fournit les
+              supports</td>
+            <td style="text-align:center;font-size:11px;background:#FFEDD5;color:#9A3412;font-weight:700;">Déploie en
+              production</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function show(id) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('panel-' + id).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+    function toggleCard(card) { card.classList.toggle('open'); }
+    function toggleVstep(el) {
+      const detail = el.nextElementSibling;
+      if (detail && detail.classList.contains('vstep-detail')) {
+        detail.classList.toggle('open');
+      }
+    }
+    function sgToggleStep(el) {
+      const items = el.querySelector('.sg-step-items');
+      if (items) items.classList.toggle('open');
+    }
+    function sgToggleGate(el) {
+      const body = el.querySelector('.sg-gate-body');
+      if (body) body.classList.toggle('open');
+    }
+    // Open first timeline card by default
+    document.querySelector('.tl-card')?.classList.add('open');
+  </script>
+</body>
+
+</html>
